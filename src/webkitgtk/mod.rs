@@ -34,6 +34,7 @@ use std::{
 };
 #[cfg(any(debug_assertions, feature = "devtools"))]
 use webkit2gtk::WebInspectorExt;
+use webkit2gtk::PermissionRequestExt;
 use webkit2gtk::{
   AutoplayPolicy, CookieManagerExt, InputMethodContextExt, LoadEvent, NavigationPolicyDecision,
   NavigationPolicyDecisionExt, NetworkProxyMode, NetworkProxySettings, PolicyDecisionType,
@@ -419,12 +420,31 @@ impl InnerWebView {
       context.set_use_system_appearance_for_scrollbars(false);
     }
 
+    // allow all permission requests
+    webview.connect_permission_request(move |_, request| {
+      request.allow();
+      true
+    });
+
     if let Some(settings) = WebViewExt::settings(webview) {
       // Enable webgl, webaudio, canvas features as default.
       settings.set_enable_webgl(true);
       settings.set_enable_webaudio(true);
       settings
         .set_enable_back_forward_navigation_gestures(attributes.back_forward_navigation_gestures);
+
+      // Enable WebRTC (requires custom build of webkitgtk)
+      settings.set_enable_webrtc(true);
+      settings.set_enable_media_stream(true);
+      settings.set_enable_mediasource(true);
+      settings.set_enable_media(true);
+      settings.set_enable_media_capabilities(true);
+      settings.set_enable_encrypted_media(true);
+      //   settings.set_enable_mock_capture_devices(true);
+      settings.set_media_playback_requires_user_gesture(false);
+      settings.set_media_playback_allows_inline(true);
+      settings.set_media_content_types_requiring_hardware_support(None);
+      //   settings.set_disable_web_security(true);
 
       // Enable clipboard
       if attributes.clipboard {
